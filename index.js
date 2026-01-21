@@ -23,27 +23,27 @@ io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
 
     // Create Room
-    socket.on('create_room', ({ playerName, maxPlayers }, callback) => {
+    socket.on('create_room', ({ playerName, maxPlayers, characterId }, callback) => {
         // Generate a short room ID (6 chars)
         const roomId = Math.random().toString(36).substr(2, 6).toUpperCase();
 
         rooms.set(roomId, {
             id: roomId,
             hostId: socket.id,
-            players: [{ id: socket.id, name: playerName }],
+            players: [{ id: socket.id, name: playerName, characterId: characterId }],
             maxPlayers: maxPlayers || 10
         });
 
         playerRooms.set(socket.id, roomId);
         socket.join(roomId);
 
-        console.log(`Room created: ${roomId} by ${playerName} (${socket.id})`);
+        console.log(`Room created: ${roomId} by ${playerName} (${socket.id}) with char ${characterId}`);
 
         callback({ success: true, roomId });
     });
 
     // Join Room
-    socket.on('join_room', ({ roomId, playerName }, callback) => {
+    socket.on('join_room', ({ roomId, playerName, characterId }, callback) => {
         // Case insensitive room ID
         const normalizedRoomId = roomId.toUpperCase();
         const room = rooms.get(normalizedRoomId);
@@ -56,17 +56,17 @@ io.on('connection', (socket) => {
             return callback({ success: false, error: '该房间已满员' });
         }
 
-        room.players.push({ id: socket.id, name: playerName });
+        room.players.push({ id: socket.id, name: playerName, characterId: characterId });
         playerRooms.set(socket.id, normalizedRoomId);
         socket.join(normalizedRoomId);
 
-        console.log(`Player ${playerName} (${socket.id}) joined room ${normalizedRoomId}`);
+        console.log(`Player ${playerName} (${socket.id}) joined room ${normalizedRoomId} with char ${characterId}`);
 
         // Notify Host
-        io.to(room.hostId).emit('player_joined', { playerId: socket.id, playerName });
+        io.to(room.hostId).emit('player_joined', { playerId: socket.id, playerName, characterId });
 
         // Broadcast to others in the room
-        socket.to(normalizedRoomId).emit('player_joined_broadcast', { playerId: socket.id, playerName });
+        socket.to(normalizedRoomId).emit('player_joined_broadcast', { playerId: socket.id, playerName, characterId });
 
         callback({ success: true, roomId: normalizedRoomId });
     });
@@ -99,6 +99,40 @@ io.on('connection', (socket) => {
             senderId: socket.id,
             payload: data
         });
+    });
+
+    // Start Game (房主触发，服务器统一广播玩家顺序)
+    socket.on('start_game', (callback) => {
+        const roomId = playerRooms.get(socket.id);
+        if (!roomId) {
+            return callback({ success: false, error: '你不在任何房间中' });
+        }
+
+        const room = rooms.get(roomId);
+        if (!room) {
+            return callback({ success: false, error: '找不到该房间' });
+        }
+
+        // 只有房主可以开始游戏
+        if (socket.id !== room.hostId) {
+            return callback({ success: false, error: '只有房主才能开始游戏' });
+        }
+
+        // 至少需要2名玩家
+        if (room.players.length < 2) {
+            return callback({ success: false, error: '至少需要 2 名玩家才能开始游戏' });
+        }
+
+        console.log(`Game starting in room ${roomId} with players:`, room.players);
+
+        // 向房间内所有玩家广播游戏开始（包括房主）
+        // 关键：所有客户端收到的 playerList 顺序完全一致
+        io.in(roomId).emit('game_started', {
+            playerList: room.players, // 服务器维护的顺序（按加入时间）
+            firstPlayerId: room.players[0].id // 第一个玩家的 ID
+        });
+
+        callback({ success: true });
     });
 
     // Disconnect
