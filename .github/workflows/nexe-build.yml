@@ -1,0 +1,60 @@
+name: Build Binary with Nexe
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Create dist directory
+      run: mkdir -p dist
+
+    - name: Build Windows x64
+      run: npx nexe . -t windows-x64 -o dist/vuno-server-win-x64.exe
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build macOS arm64 (Apple Silicon)
+      run: npx nexe . -t mac-arm64 -o dist/vuno-server-mac-arm64
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build Linux x64
+      run: npx nexe . -t linux-x64 -o dist/vuno-server-linux-x64
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build Linux arm64
+      run: npx nexe . -t linux-arm64 -o dist/vuno-server-linux-arm64
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: vuno-server-binaries
+        path: dist/
