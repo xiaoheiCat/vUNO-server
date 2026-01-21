@@ -49,11 +49,11 @@ io.on('connection', (socket) => {
         const room = rooms.get(normalizedRoomId);
 
         if (!room) {
-            return callback({ success: false, error: 'Room not found' });
+            return callback({ success: false, error: '找不到该房间' });
         }
 
         if (room.players.length >= room.maxPlayers) {
-            return callback({ success: false, error: 'Room is full' });
+            return callback({ success: false, error: '该房间已满员' });
         }
 
         room.players.push({ id: socket.id, name: playerName });
