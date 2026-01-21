@@ -11,7 +11,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 架构与代码结构
 
 **项目概览**
-本项目是 vUNO 游戏的多人游戏信令服务器 (Signaling Server)。它基于 Node.js、Express 和 Socket.IO 构建，主要用于协助客户端建立 WebRTC P2P 连接以及管理房间状态。
+本项目是 vUNO 游戏的多人游戏服务器 (Multiplayer Server)。它基于 Node.js、Express 和 Socket.IO 构建。
+**关键变更**：为了提高连接稳定性，本项目已从单纯的 WebRTC 信令服务器转型为**游戏数据中继服务器**。它不仅管理房间，还负责转发所有游戏内的操作数据（出牌、同步状态等），不再依赖客户端 P2P 连接。
 
 **核心组件**
 - **入口文件** (`index.js`): 初始化 HTTP 服务器和 Socket.IO 实例，配置 CORS。
@@ -19,11 +20,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - **房间结构**: 包含房间 ID (`roomId`)、房主 ID (`hostId`)、玩家列表 (`players`) 和最大人数限制。
 
 **通信机制**
-- **Socket.IO 事件**:
+- **基础事件**:
   - `create_room`: 创建新房间，生成唯一 ID，将请求者设为房主。
-  - `join_room`: 验证房间存在且未满后加入玩家，并向房主发送 `player_joined` 通知以触发 WebRTC 连接流程。
-  - `signal`: 转发 WebRTC 信令数据（如 offer, answer, ICE candidate），实现点对点连接握手。
-  - `disconnect`: 处理玩家断开连接，从房间移除玩家并通知房间内其他成员 (`player_left`)，若房间为空则销毁。
+  - `join_room`: 验证房间存在且未满后加入玩家，通知房间内所有人 (`player_joined`, `player_joined_broadcast`)。
+  - `disconnect`: 处理玩家断开连接，从房间移除玩家。**新增**：如果房主断开，自动将房主权限移交给下一位玩家 (`host_changed`)。
+
+- **游戏数据转发 (核心)**:
+  - `broadcast_game_event`: 客户端发送此事件，服务器将其广播给房间内除发送者外的所有其他玩家。用于：出牌、摸牌、技能使用、房间状态同步。
+  - `send_game_event`: 客户端发送此事件，服务器将其转发给指定的目标玩家 (`targetId`)。用于：点对点私信同步。
+  - `game_event`: 客户端监听此事件，接收来自服务器转发的游戏数据。
 
 **技术栈**
 - **Runtime**: Node.js

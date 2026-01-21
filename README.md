@@ -1,15 +1,16 @@
-# vUNO Signaling Server
+# vUNO Multiplayer Server
 
 这是 [vUNO](https://github.com/xiaoheiCat/vUNO) 游戏的配套多人游戏服务器。
 
-它的主要作用是协助玩家客户端之间建立 WebRTC P2P 连接，并管理多人游戏房间的状态。游戏本身的数据传输主要通过 P2P 进行，服务器仅负责“握手”和基本的房间人员管理。
+它负责管理多人游戏房间状态，并作为**中心节点转发所有游戏数据**。为了保证连接的稳定性和穿透性，我们已从纯 P2P 架构迁移为 **Socket.IO 服务器转发架构**。
 
 ## ✨ 功能特性
 
 *   **房间管理**：创建房间、加入房间、房间人员状态同步。
-*   **信令转发**：在玩家之间转发 WebRTC 的 Offer、Answer 和 ICE Candidates。
+*   **数据中继**：实时转发玩家的出牌、摸牌、技能使用等游戏操作。
+*   **房主迁移**：房主断线后，自动将房主权限移交给下一位玩家，确保游戏继续。
 *   **跨平台**：支持 Windows、macOS 和 Linux。
-*   **轻量级**：基于 Node.js 和 Socket.IO 构建，资源占用低。
+*   **轻量级**：基于 Node.js 和 Socket.IO 构建。
 *   **便携式**：提供单文件可执行程序，无需配置 Node.js 环境即可运行。
 
 ## 🚀 用户使用指南 (如何部署)
@@ -26,7 +27,7 @@
     *   Linux: `vuno-server-linux-x64` / `vuno-server-linux-arm64`
 2.  直接双击或在终端运行该文件。
 3.  看到 `Signaling server running on port 3001` 即表示启动成功。
-4.  在 vUNO 游戏客户端中，将服务器地址配置为 `http://你的IP地址:3001`。
+4.  在 vUNO 游戏客户端中，点击「服务器设置」，填入服务器地址（例如局域网 IP `http://192.168.x.x` 端口 `3001`）。
 
 ### 方式二：源码运行
 
@@ -34,11 +35,10 @@
 
 1.  确保已安装 [Node.js](https://nodejs.org/) (推荐 v16+)。
 2.  克隆本仓库或下载源码。
-3.  安装依赖：
+3.  进入 `server` 目录并安装依赖：
     ```bash
+    cd server
     npm install
-    # 或者
-    pnpm install
     ```
 4.  启动服务器：
     ```bash
@@ -51,61 +51,38 @@
 
 **Windows (CMD):**
 ```cmd
-set PORT=8080 && vuno-server-win-x64.exe
+set PORT=8080 && npm start
 ```
 
 **Linux/macOS:**
 ```bash
-PORT=8080 ./vuno-server-linux-x64
+PORT=8080 npm start
 ```
 
 ## 🛠️ 开发者指南
 
-### 环境搭建
-
-```bash
-# 安装依赖
-npm install
-
-# 启动开发服务器 (支持热重载)
-npm run dev
-```
-
-### 构建二进制文件
-
-本项目使用 Nexe 打包。你可以手动构建特定平台的版本：
-
-```bash
-# 安装 Nexe (如果你没有全局安装)
-npm install -g nexe
-
-# 构建 Windows x64
-nexe . -t windows-x64 -o dist/vuno-server-win.exe
-
-# 构建 Linux x64
-nexe . -t linux-x64 -o dist/vuno-server-linux
-```
-
-或者直接使用我们配置好的 GitHub Actions 工作流，推送到仓库即可自动构建所有平台版本。
-
-### API 文档 (Socket.IO 事件)
+### 核心事件 (Socket.IO)
 
 服务器监听以下事件：
 
 | 事件名 | 参数 | 描述 |
 |--------|------|------|
 | `create_room` | `{ playerName, maxPlayers }` | 创建新房间。返回 `{ success, roomId }`。 |
-| `join_room` | `{ roomId, playerName }` | 加入现有房间。成功后触发房主端的 `player_joined` 事件。 |
-| `signal` | `{ targetId, type, payload }` | 转发 WebRTC 信令数据给目标玩家 `targetId`。 |
-| `disconnect` | 无 | 玩家断开连接，服务器会自动清理房间并通知其他玩家。 |
+| `join_room` | `{ roomId, playerName }` | 加入现有房间。成功后触发广播。 |
+| `broadcast_game_event` | `data` | 向房间内除发送者外的所有人广播游戏数据。 |
+| `send_game_event` | `{ targetId, data }` | 向指定玩家发送游戏数据（如私信）。 |
+| `disconnect` | 无 | 玩家断开连接，服务器会自动清理并处理房主迁移。 |
 
 服务器发送给客户端的事件：
 
 | 事件名 | 参数 | 描述 |
 |--------|------|------|
-| `player_joined` | `{ playerId, playerName }` | 通知房主有新玩家加入，需要发起 WebRTC 连接。 |
+| `player_joined` | `{ playerId, playerName }` | 通知房主有新玩家加入。 |
+| `player_joined_broadcast` | `{ playerId, playerName }` | 通知房间内其他玩家有新玩家加入。 |
+| `game_event` | `{ senderId, payload }` | 接收来自其他玩家的游戏数据（操作、状态同步等）。 |
 | `player_left` | `{ playerId }` | 通知房间内其他玩家有人离开。 |
-| `signal` | `{ senderId, type, payload }` | 接收来自其他玩家的 WebRTC 信令数据。 |
+| `you_are_host` | 无 | 通知当前玩家已成为新房主。 |
+| `host_changed` | `{ newHostId }` | 通知房间内所有玩家房主已变更。 |
 
 ## 🤝 贡献
 
