@@ -38,11 +38,35 @@
 3.  进入 `server` 目录并安装依赖：
     ```bash
     cd server
-    npm install
+    pnpm install  # 我们使用 pnpm 作为包管理器，如果您没有，请先执行 npm i -g pnpm 安装它。
     ```
 4.  启动服务器：
     ```bash
-    npm start
+    pnpm start
+    ```
+
+### 方式三：Docker 部署 (容器化)
+
+如果你习惯使用 Docker，我们也提供了容器化部署支持：
+
+**使用 Docker Compose (推荐)**
+
+1.  确保已安装 [Docker](https://www.docker.com/) 和 Docker Compose。
+2.  下载本仓库中的 `docker-compose.yml`。
+3.  运行启动命令：
+    ```bash
+    docker-compose up -d
+    ```
+
+**使用 Docker Build**
+
+1.  构建镜像：
+    ```bash
+    docker build -t vuno-server .
+    ```
+2.  运行容器：
+    ```bash
+    docker run -d -p 3001:3001 --name vuno-server vuno-server
     ```
 
 ### 配置端口
