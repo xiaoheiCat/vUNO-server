@@ -484,8 +484,15 @@ io.on('connection', (socket) => {
             return callback({ success: false, error: '不是你的回合！' });
         }
 
-        // 🔧 关键修复：验证并消耗 AP（摸牌消耗 1 AP）
         const playerState = room.gameState.playerStates[socket.id];
+
+        // 🔧 修复：检查手牌上限
+        const maxHandSize = playerState.maxHandSize || 8;
+        const currentHandCount = room.gameState.playerHands[socket.id] ? room.gameState.playerHands[socket.id].length : 0;
+        if (currentHandCount >= maxHandSize) {
+            return callback({ success: false, error: '手牌已满' });
+        }
+
         if (!playerState) {
             return callback({ success: false, error: '玩家状态未初始化' });
         }
@@ -787,6 +794,13 @@ io.on('connection', (socket) => {
 
         const playerState = room.gameState.playerStates[socket.id];
 
+        // 🔧 修复：检查行动点（所有技能消耗 1 AP）
+        const totalAP = playerState.ap + (playerState.tempAP || 0);
+        const apCost = 1;
+        if (totalAP < apCost) {
+            return callback({ success: false, error: '行动点不足' });
+        }
+
         // 🔧 修复：检查是否拥有该技能牌
         if (!playerState.skillCards[skillId] || playerState.skillCards[skillId] <= 0) {
             return callback({ success: false, error: '你没有这张技能牌！' });
@@ -797,6 +811,18 @@ io.on('connection', (socket) => {
         const limit = 1; // 目前所有技能限制为每回合1次
         if (usedCount >= limit) {
             return callback({ success: false, error: '该技能牌每回合仅限使用一次！' });
+        }
+
+        // 🔧 修复：消耗 AP（优先消耗临时 AP）
+        if (playerState.tempAP > 0) {
+            const deduction = Math.min(playerState.tempAP, apCost);
+            playerState.tempAP -= deduction;
+            const remainingCost = apCost - deduction;
+            if (remainingCost > 0) {
+                playerState.ap = Math.max(0, playerState.ap - remainingCost);
+            }
+        } else {
+            playerState.ap = Math.max(0, playerState.ap - apCost);
         }
 
         // 🔧 修复：消耗技能牌
