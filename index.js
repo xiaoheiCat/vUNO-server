@@ -253,13 +253,15 @@ io.on('connection', (socket) => {
             const maxAP = player.characterId === 4 ? 4 : 3; // 企划大师(ID=4) AP上限为4
             // 聊天达人(ID=3) 初始额外抽牌+1
             const initialExtraDraw = player.characterId === 3 ? 1 : 0;
+            // 全能偶像(ID=5) 初始粉丝 10k
+            const initialFans = player.characterId === 5 ? 10 : 0;
 
             room.gameState.playerStates[player.id] = {
                 ap: maxAP,
                 maxAP: maxAP,
                 tempAP: 0,
                 nextTurnAPPenalty: 0,
-                fans: 0,
+                fans: initialFans,
                 skillCards: {},
                 skillUsageThisTurn: {},
                 equipment: { red: 0, yellow: 0, green: 0 },
