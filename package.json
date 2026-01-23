@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Signaling server for vUNO",
   "main": "index.js",
+  "bin": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js"
