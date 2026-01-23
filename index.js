@@ -377,6 +377,21 @@ io.on('connection', (socket) => {
                 io.to(nextPlayer.id).emit('cards_drawn_on_turn_start', {
                     cards: drawnCards
                 });
+
+                // 🔧 广播给其他玩家：更新手牌数量
+                // 注意：这里发送给房间内所有人（包括 nextPlayer），但客户端会过滤掉自己的 ID
+                // 使用 io.in(roomId) 确保包括当前结束回合的玩家（socket）和其他人
+                io.in(roomId).emit('opponent_card_drawn', {
+                    playerId: nextPlayer.id,
+                    handCount: room.gameState.playerHands[nextPlayer.id].length,
+                    playerState: {
+                        ap: nextPlayerState.ap,
+                        tempAP: nextPlayerState.tempAP,
+                        maxAP: nextPlayerState.maxAP,
+                        fans: nextPlayerState.fans,
+                        equipment: nextPlayerState.equipment
+                    }
+                });
             }
 
             // 🔧 6. 回合开始技能牌掉落检查 (30% 概率)
@@ -738,6 +753,8 @@ io.on('connection', (socket) => {
             fansGained: fansGained,
             batchPlayMode: room.gameState.batchPlayMode,
             batchColor: room.gameState.batchColor,
+            // 🔧 新增：同步剩余手牌数量
+            handCount: playerHand.length,
             // 🔧 关键修复：广播出牌玩家的最新状态（AP、粉丝数等）
             playerState: {
                 ap: playerState.ap,
