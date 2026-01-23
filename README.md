@@ -34,12 +34,12 @@
 
 我们利用 Pkg 将服务器打包成了独立的可执行文件，无需安装任何环境。
 
-1.  前往 [Actions](https://github.com/xiaoheiCat/vUNO-server/actions) 页面下载对应系统的最新版本：
+1.  使用 [Nightly.link](https://nightly.link/xiaoheiCat/vUNO-server/workflows/nexe-build/main/vuno-server-binaries.zip) 下载并解压对应系统的最新构建版本：
     *   Windows: `vuno-server-win-x64.exe`
-    *   macOS: `vuno-server-mac-arm64` (Apple Silicon)
+    *   macOS: `vuno-server-mac-arm64` (仅 Apple Silicon 可用)
     *   Linux: `vuno-server-linux-x64` / `vuno-server-linux-arm64`
 2.  直接双击或在终端运行该文件。
-3.  看到 `Signaling server running on port 3001` 即表示启动成功。
+3.  看到 `vUNO 多人游戏服务器运行在端口 3001` 即表示启动成功。
 4.  在 vUNO 游戏客户端中，点击「服务器设置」，填入服务器地址（例如局域网 IP `http://192.168.x.x` 端口 `3001`）。
 
 ### 方式二：源码运行
