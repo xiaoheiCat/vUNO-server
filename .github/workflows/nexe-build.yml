@@ -1,4 +1,4 @@
-name: Build Binary with Nexe
+name: Build Binary with Pkg
 
 on:
   push:
@@ -39,22 +39,22 @@ jobs:
       run: mkdir -p dist
 
     - name: Build Windows x64
-      run: pnpm dlx nexe . -t windows-x64 -o dist/vuno-server-win-x64.exe
+      run: pnpm dlx pkg . -t node18-win-x64 -o dist/vuno-server-win-x64.exe
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build macOS arm64 (Apple Silicon)
-      run: pnpm dlx nexe . -t mac-arm64 -o dist/vuno-server-mac-arm64
+      run: pnpm dlx pkg . -t node18-macos-arm64 -o dist/vuno-server-mac-arm64
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build Linux x64
-      run: pnpm dlx nexe . -t linux-x64 -o dist/vuno-server-linux-x64
+      run: pnpm dlx pkg . -t node18-linux-x64 -o dist/vuno-server-linux-x64
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build Linux arm64
-      run: pnpm dlx nexe . -t linux-arm64 -o dist/vuno-server-linux-arm64
+      run: pnpm dlx pkg . -t node18-linux-arm64 -o dist/vuno-server-linux-arm64
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

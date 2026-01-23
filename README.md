@@ -32,7 +32,7 @@
 
 ### 方式一：运行可执行文件 (推荐)
 
-我们利用 Nexe 将服务器打包成了独立的可执行文件，无需安装任何环境。
+我们利用 Pkg 将服务器打包成了独立的可执行文件，无需安装任何环境。
 
 1.  前往 [Actions](https://github.com/xiaoheiCat/vUNO-server/actions) 页面下载对应系统的最新版本：
     *   Windows: `vuno-server-win-x64.exe`
