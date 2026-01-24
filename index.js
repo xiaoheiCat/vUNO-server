@@ -41,24 +41,24 @@ function generateShuffledDeck(seed) {
     const cardDistribution = [
         // 红色卡牌
         { type: 'red', value: 3, count: 8 },
-        { type: 'red', value: 4, count: 6 },
-        { type: 'red', value: 5, count: 4 },
+        { type: 'red', value: 4, count: 8 },
+        { type: 'red', value: 5, count: 6 },
         { type: 'red', value: 6, count: 2 },
         // 黄色卡牌
-        { type: 'yellow', value: 3, count: 6 },
+        { type: 'yellow', value: 3, count: 8 },
         { type: 'yellow', value: 4, count: 8 },
-        { type: 'yellow', value: 5, count: 5 },
-        { type: 'yellow', value: 6, count: 3 },
+        { type: 'yellow', value: 5, count: 6 },
+        { type: 'yellow', value: 6, count: 2 },
         // 绿色卡牌
-        { type: 'green', value: 3, count: 4 },
-        { type: 'green', value: 4, count: 6 },
-        { type: 'green', value: 5, count: 8 },
-        { type: 'green', value: 6, count: 4 },
+        { type: 'green', value: 3, count: 8 },
+        { type: 'green', value: 4, count: 8 },
+        { type: 'green', value: 5, count: 6 },
+        { type: 'green', value: 6, count: 2 },
         // 灰色卡牌
-        { type: 'grey', value: 3, count: 5 },
-        { type: 'grey', value: 4, count: 6 },
-        { type: 'grey', value: 5, count: 5 },
-        { type: 'grey', value: 6, count: 4 },
+        { type: 'grey', value: 3, count: 2 },
+        { type: 'grey', value: 4, count: 2 },
+        { type: 'grey', value: 5, count: 2 },
+        { type: 'grey', value: 6, count: 2 },
     ];
 
     // 创建牌库
